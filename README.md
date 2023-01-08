@@ -1,4 +1,4 @@
-<center><img src="https://github.com/xuebinqin/U-2-Net/blob/master/figures/motor-demo.gif"></center>
+<div align=center><img src="https://github.com/xuebinqin/U-2-Net/blob/master/figures/motor-demo.gif"></div>
 
 # U-Net: 使用 PyTorch 进行语义分割
 
