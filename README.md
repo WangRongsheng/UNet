@@ -19,6 +19,11 @@
 pip install -r requirements.txt
 ```
 
+```
+torch                          1.13.0
+torchvision                    0.14.0
+```
+
 4. Download the data and run training:
 ```bash
 bash scripts/download_data.sh
@@ -55,6 +60,17 @@ optional arguments:
 默认情况下，`scale`为 0.5，因此如果您希望获得更好的结果（会被使用更多内存），请将其设置为 1。
 
 `--amp` 代表使用自动混合精度。混合精度允许模型使用更少的内存，并通过使用 FP16 算法在 GPU 上更快，建议启用 AMP。
+
+- 支持训练的格式搭配：
+|imgs|masks|
+|:-|:-|
+|jpg|gif|
+|tif|gif|
+
+- 实验结果：
+|model|Validation Dice score|
+|:-|:-|
+|UNet|0.99|
 
 
 ### 预测
@@ -123,6 +139,11 @@ bash scripts/download_data.sh
 ```
 
 输入图像和目标蒙版应分别位于 `data/imgs` 和 `data/masks` 文件夹中（请注意，由于数据加载器，`imgs` 和 `masks` 文件夹不应包含任何子文件夹或任何其他文件）。对于 Carvana，图像是 RGB，蒙版是黑白的。
+
+```
+- imgs：.jpg
+- masks：.gif
+```
 
 只要确保在 `utils/data_loading.py`中正确加载它，就可以使用自己的数据集。
 

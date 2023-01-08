@@ -34,20 +34,16 @@ def predict_img(net,
 
 
 def get_args():
-    parser = argparse.ArgumentParser(description='Predict masks from input images')
-    parser.add_argument('--model', '-m', default='MODEL.pth', metavar='FILE',
-                        help='Specify the file in which the model is stored')
-    parser.add_argument('--input', '-i', metavar='INPUT', nargs='+', help='Filenames of input images', required=True)
-    parser.add_argument('--output', '-o', metavar='OUTPUT', nargs='+', help='Filenames of output images')
-    parser.add_argument('--viz', '-v', action='store_true',
-                        help='Visualize the images as they are processed')
-    parser.add_argument('--no-save', '-n', action='store_true', help='Do not save the output masks')
-    parser.add_argument('--mask-threshold', '-t', type=float, default=0.5,
-                        help='Minimum probability value to consider a mask pixel white')
-    parser.add_argument('--scale', '-s', type=float, default=0.5,
-                        help='Scale factor for the input images')
-    parser.add_argument('--bilinear', action='store_true', default=False, help='Use bilinear upsampling')
-
+    parser = argparse.ArgumentParser(description='从输入图像预测掩码')
+    parser.add_argument('--model', '-m', default='MODEL.pth', metavar='FILE', help='指定模型文件')
+    parser.add_argument('--input', '-i', metavar='INPUT', nargs='+', help='输入图像的文件名', required=True)
+    parser.add_argument('--output', '-o', metavar='OUTPUT', nargs='+', help='输出图像的文件名')
+    parser.add_argument('--viz', '-v', action='store_true', help='在处理图像时将其可视化')
+    parser.add_argument('--no-save', '-n', action='store_true', help='不保存输出掩码')
+    parser.add_argument('--mask-threshold', '-t', type=float, default=0.5, help='认为一个掩码像素为白色的最小概率值')
+    parser.add_argument('--scale', '-s', type=float, default=0.5, help='输入图像的Scale因子')
+    parser.add_argument('--bilinear', action='store_true', default=False, help='使用双线性上采样')
+    # python predict.py -m checkpoints/checkpoint_epoch5.pth -i data/imgs/19_test.tif -o output.gif
     return parser.parse_args()
 
 
