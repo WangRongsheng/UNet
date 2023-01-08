@@ -62,12 +62,14 @@ optional arguments:
 `--amp` 代表使用自动混合精度。混合精度允许模型使用更少的内存，并通过使用 FP16 算法在 GPU 上更快，建议启用 AMP。
 
 - 支持训练的格式搭配：
+
 |imgs|masks|
 |:-|:-|
 |jpg|gif|
 |tif|gif|
 
 - 实验结果：
+
 |model|Validation Dice score|
 |:-|:-|
 |UNet|0.99|
