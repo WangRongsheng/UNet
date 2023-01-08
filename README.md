@@ -130,6 +130,7 @@ bash scripts/download_data.sh
 ## 参考
 
 - [https://github.com/milesial/Pytorch-UNet](https://github.com/milesial/Pytorch-UNet)
+- [https://www.cnblogs.com/wanghui-garcia/p/10719121.html](https://www.cnblogs.com/wanghui-garcia/p/10719121.html)
 - [U-Net: Convolutional Networks for Biomedical Image Segmentation](https://arxiv.org/abs/1505.04597)
 
 

@@ -1,3 +1,4 @@
+# 导库
 import argparse
 import logging
 import os
@@ -19,6 +20,7 @@ from unet import UNet
 from utils.data_loading import BasicDataset, CarvanaDataset
 from utils.dice_score import dice_loss
 
+# 配置数据和权重路径
 dir_img = Path('./data/imgs/')
 dir_mask = Path('./data/masks/')
 dir_checkpoint = Path('./checkpoints/')
@@ -38,23 +40,23 @@ def train_model(
         momentum: float = 0.999,
         gradient_clipping: float = 1.0,
 ):
-    # 1. Create dataset
+    # 1. 创建数据集
     try:
         dataset = CarvanaDataset(dir_img, dir_mask, img_scale)
     except (AssertionError, RuntimeError, IndexError):
         dataset = BasicDataset(dir_img, dir_mask, img_scale)
 
-    # 2. Split into train / validation partitions
+    # 2. 划分训练与验证集
     n_val = int(len(dataset) * val_percent)
     n_train = len(dataset) - n_val
     train_set, val_set = random_split(dataset, [n_train, n_val], generator=torch.Generator().manual_seed(0))
 
-    # 3. Create data loaders
+    # 3. 创建dataloaders
     loader_args = dict(batch_size=batch_size, num_workers=os.cpu_count(), pin_memory=True)
     train_loader = DataLoader(train_set, shuffle=True, **loader_args)
     val_loader = DataLoader(val_set, shuffle=False, drop_last=True, **loader_args)
 
-    # (Initialize logging)
+    # (初始化W&B可视化记录)
     experiment = wandb.init(project='U-Net', resume='allow', anonymous='must')
     experiment.config.update(
         dict(epochs=epochs, batch_size=batch_size, learning_rate=learning_rate,
@@ -73,7 +75,7 @@ def train_model(
         Mixed Precision: {amp}
     ''')
 
-    # 4. Set up the optimizer, the loss, the learning rate scheduler and the loss scaling for AMP
+    # 4. 设置优化器、损失、学习率调度器和AMP的损失比例scaling
     optimizer = optim.RMSprop(model.parameters(),
                               lr=learning_rate, weight_decay=weight_decay, momentum=momentum, foreach=True)
     scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'max', patience=5)  # goal: maximize Dice score
@@ -81,7 +83,7 @@ def train_model(
     criterion = nn.CrossEntropyLoss() if model.n_classes > 1 else nn.BCEWithLogitsLoss()
     global_step = 0
 
-    # 5. Begin training
+    # 5. 开始训练
     for epoch in range(1, epochs + 1):
         model.train()
         epoch_loss = 0
@@ -126,7 +128,7 @@ def train_model(
                 })
                 pbar.set_postfix(**{'loss (batch)': loss.item()})
 
-                # Evaluation round
+                # eval评测
                 division_step = (n_train // (5 * batch_size))
                 if division_step > 0:
                     if global_step % division_step == 0:
@@ -165,33 +167,46 @@ def train_model(
             torch.save(state_dict, str(dir_checkpoint / 'checkpoint_epoch{}.pth'.format(epoch)))
             logging.info(f'Checkpoint {epoch} saved!')
 
-
+# 设置参数
 def get_args():
-    parser = argparse.ArgumentParser(description='Train the UNet on images and target masks')
-    parser.add_argument('--epochs', '-e', metavar='E', type=int, default=5, help='Number of epochs')
-    parser.add_argument('--batch-size', '-b', dest='batch_size', metavar='B', type=int, default=1, help='Batch size')
+    parser = argparse.ArgumentParser(description='在图像和目标掩码上训练UNet')
+    parser.add_argument('--epochs', '-e', metavar='E', type=int, default=5, help='训练轮次')
+    parser.add_argument('--batch-size', '-b', dest='batch_size', metavar='B', type=int, default=1, help='批大小')
     parser.add_argument('--learning-rate', '-l', metavar='LR', type=float, default=1e-5,
-                        help='Learning rate', dest='lr')
-    parser.add_argument('--load', '-f', type=str, default=False, help='Load model from a .pth file')
-    parser.add_argument('--scale', '-s', type=float, default=0.5, help='Downscaling factor of the images')
-    parser.add_argument('--validation', '-v', dest='val', type=float, default=10.0,
-                        help='Percent of the data that is used as validation (0-100)')
-    parser.add_argument('--amp', action='store_true', default=False, help='Use mixed precision')
-    parser.add_argument('--bilinear', action='store_true', default=False, help='Use bilinear upsampling')
-    parser.add_argument('--classes', '-c', type=int, default=2, help='Number of classes')
+                        help='学习率', dest='lr')
+    parser.add_argument('--load', '-f', type=str, default=False, help='加载预训练.pth文件')
+    '''
+    图片太大训练时间长，耗费资源多
+    '''
+    parser.add_argument('--scale', '-s', type=float, default=0.5, help='图像的缩放比例')
+    parser.add_argument('--validation', '-v', dest='val', type=float, default=10.0, help='用作验证的数据的百分比 (0-100)')
+    parser.add_argument('--amp', action='store_true', default=False, help='使用混合精度')
+    '''
+    Upsampling 上采样常用的方式有两种：1.反卷积；2.插值。
+    这里介绍文中使用的插值方式。
+    在插值实现方式中，bilinear 双线性插值的综合表现较好也较为常见 。
+    '''
+    parser.add_argument('--bilinear', action='store_true', default=False, help='使用双线性上采样')
+    '''
+    你要分割的类别数加1，比如你的前景有两类，n_classes = 3
+    '''
+    parser.add_argument('--classes', '-c', type=int, default=2, help='类别数量')
 
     return parser.parse_args()
 
 
 if __name__ == '__main__':
+    # 得到用户输入的超参数
     args = get_args()
 
     logging.basicConfig(level=logging.INFO, format='%(levelname)s: %(message)s')
+    # 指定设备
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     logging.info(f'Using device {device}')
 
-    # Change here to adapt to your data
+    # 改变这里适配你的数据集
     # n_channels=3 for RGB images
+    # 如果是RGB图像 n_channels=3，如果是医学图像（大部分是灰度图）n_channels=1
     # n_classes is the number of probabilities you want to get per pixel
     model = UNet(n_channels=3, n_classes=args.classes, bilinear=args.bilinear)
     model = model.to(memory_format=torch.channels_last)
