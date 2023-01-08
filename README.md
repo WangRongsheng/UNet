@@ -1,3 +1,5 @@
+<center><img src="https://github.com/xuebinqin/U-2-Net/blob/master/figures/motor-demo.gif"></center>
+
 # U-Net: 使用 PyTorch 进行语义分割
 
 - [快速开始](#快速开始)
